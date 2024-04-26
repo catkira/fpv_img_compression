@@ -11,7 +11,7 @@ def dct2(f):
     Returns: 
         2D DCT of f
     """
-    return dct(dct(f, axis=0, norm='ortho' ),axis=1, norm='ortho')
+    return dct(dct(f, axis=0, norm='ortho'), axis=1, norm='ortho')
 
 def idct2(f):
     """2D Inverse Discrete Cosine Transform
@@ -24,8 +24,8 @@ def idct2(f):
 
 BLOCK_SIZE = 8
 QUALITY_FACTOR = 2
-QUANTIZATION_BITS_Y = 5
-QUANTIZATION_BITS_UV = 5
+QUANTIZATION_BITS_Y = 4
+QUANTIZATION_BITS_UV = 4
 
 mask = np.zeros((BLOCK_SIZE, BLOCK_SIZE))
 mask[0,0] = 1
@@ -57,6 +57,13 @@ yuv_data = np.array(yuv_image)
 y_channel = yuv_data[:, :, 0]
 u_channel = yuv_data[:, :, 1]
 v_channel = yuv_data[:, :, 2]
+# MAX_Y = np.max(yuv_data[:, :, 0])
+# MAX_U = np.max(yuv_data[:, :, 1])
+# MAX_V = np.max(yuv_data[:, :, 2])
+MAX_Y = 255  # from 8-bit RGB
+MAX_U = 255  # from 8-bit RGB
+MAX_V = 255  # from 8-bit RGB
+print(f'MAX_Y = {MAX_Y}, MAX_U = {MAX_U}, MAX_V = {MAX_V}')
 
 blocks = np.zeros((BLOCK_SIZE, BLOCK_SIZE, y_channel.shape[0] // BLOCK_SIZE, y_channel.shape[1] // BLOCK_SIZE, 3), int)
 
@@ -65,16 +72,16 @@ MAX_QUANT_Y = 2 ** QUANTIZATION_BITS_Y - 1
 MAX_QUANT_UV = 2 ** QUANTIZATION_BITS_UV - 1
 for y in range(0, y_channel.shape[0], BLOCK_SIZE):
     for x in range(0, y_channel.shape[1], BLOCK_SIZE):
-        blocks[:, :, y // BLOCK_SIZE, x // BLOCK_SIZE, 0] = np.round(dct2(y_channel[y:y+BLOCK_SIZE, x:x+BLOCK_SIZE]) / (BLOCK_SIZE ** 4) * MAX_QUANT_Y)
-        blocks[:, :, y // BLOCK_SIZE, x // BLOCK_SIZE, 1] = np.round(dct2(u_channel[y:y+BLOCK_SIZE, x:x+BLOCK_SIZE]) / (BLOCK_SIZE ** 4) * MAX_QUANT_UV)
-        blocks[:, :, y // BLOCK_SIZE, x // BLOCK_SIZE, 2] = np.round(dct2(v_channel[y:y+BLOCK_SIZE, x:x+BLOCK_SIZE]) / (BLOCK_SIZE ** 4) * MAX_QUANT_UV)
+        blocks[:, :, y // BLOCK_SIZE, x // BLOCK_SIZE, 0] = np.round(dct2(y_channel[y:y+BLOCK_SIZE, x:x+BLOCK_SIZE]) / (MAX_Y * BLOCK_SIZE) * MAX_QUANT_Y)
+        blocks[:, :, y // BLOCK_SIZE, x // BLOCK_SIZE, 1] = np.round(dct2(u_channel[y:y+BLOCK_SIZE, x:x+BLOCK_SIZE]) / (MAX_U * BLOCK_SIZE) * MAX_QUANT_UV)
+        blocks[:, :, y // BLOCK_SIZE, x // BLOCK_SIZE, 2] = np.round(dct2(v_channel[y:y+BLOCK_SIZE, x:x+BLOCK_SIZE]) / (MAX_V * BLOCK_SIZE) * MAX_QUANT_UV)
 
 # Perform Inverse DCT on each 8x8 block of the Y, U, and V channels
 for y in range(0, y_channel.shape[0] // BLOCK_SIZE):
     for x in range(0, y_channel.shape[1] // BLOCK_SIZE):
-        y_channel[y * BLOCK_SIZE : (y+1) * BLOCK_SIZE, x * BLOCK_SIZE : (x+1) * BLOCK_SIZE] = idct2(apply_mask(blocks[:, :, y, x, 0]) * (BLOCK_SIZE ** 4) / MAX_QUANT_Y)
-        u_channel[y * BLOCK_SIZE : (y+1) * BLOCK_SIZE, x * BLOCK_SIZE : (x+1) * BLOCK_SIZE] = idct2(apply_mask(blocks[:, :, y, x, 1]) * (BLOCK_SIZE ** 4) / MAX_QUANT_UV)
-        v_channel[y * BLOCK_SIZE : (y+1) * BLOCK_SIZE, x * BLOCK_SIZE : (x+1) * BLOCK_SIZE] = idct2(apply_mask(blocks[:, :, y, x, 2]) * (BLOCK_SIZE ** 4) / MAX_QUANT_UV)
+        y_channel[y * BLOCK_SIZE : (y+1) * BLOCK_SIZE, x * BLOCK_SIZE : (x+1) * BLOCK_SIZE] = idct2(apply_mask(blocks[:, :, y, x, 0]) * (MAX_Y * BLOCK_SIZE) / MAX_QUANT_Y)
+        u_channel[y * BLOCK_SIZE : (y+1) * BLOCK_SIZE, x * BLOCK_SIZE : (x+1) * BLOCK_SIZE] = idct2(apply_mask(blocks[:, :, y, x, 1]) * (MAX_U * BLOCK_SIZE) / MAX_QUANT_UV)
+        v_channel[y * BLOCK_SIZE : (y+1) * BLOCK_SIZE, x * BLOCK_SIZE : (x+1) * BLOCK_SIZE] = idct2(apply_mask(blocks[:, :, y, x, 2]) * (MAX_V * BLOCK_SIZE) / MAX_QUANT_UV)
 
 compression_factor = 8*8*8 / QUANTIZATION_BITS_Y / QUANTIZATION_BITS_UV / QUANTIZATION_BITS_UV * BLOCK_SIZE * BLOCK_SIZE / np.count_nonzero(mask)
 
