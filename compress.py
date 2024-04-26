@@ -36,9 +36,14 @@ if QUALITY_FACTOR_Y >= 2:
 if QUALITY_FACTOR_Y >= 3:
     mask_y[1,1] = 1
     mask_y[0,2] = 1
-    mask_y[1,2] = 1
     mask_y[2,0] = 1
+if QUALITY_FACTOR_Y >= 4:
+    mask_y[3,0] = 1
     mask_y[2,1] = 1
+    mask_y[1,2] = 1
+    mask_y[0,3] = 1
+if QUALITY_FACTOR_Y >= 5:
+    mask_y = np.ones((BLOCK_SIZE, BLOCK_SIZE))
 print(f'using {np.count_nonzero(mask_y)}/{BLOCK_SIZE * BLOCK_SIZE} DCT coefficients for Y')
 
 mask_uv = np.zeros((BLOCK_SIZE, BLOCK_SIZE))
@@ -49,9 +54,14 @@ if QUALITY_FACTOR_UV >= 2:
 if QUALITY_FACTOR_UV >= 3:
     mask_uv[1,1] = 1
     mask_uv[0,2] = 1
-    mask_uv[1,2] = 1
     mask_uv[2,0] = 1
+if QUALITY_FACTOR_UV >= 4:
+    mask_uv[3,0] = 1
     mask_uv[2,1] = 1
+    mask_uv[1,2] = 1
+    mask_uv[0,3] = 1
+if QUALITY_FACTOR_UV >= 5:
+    mask_uv = np.ones((BLOCK_SIZE, BLOCK_SIZE))
 print(f'using {np.count_nonzero(mask_uv)}/{BLOCK_SIZE * BLOCK_SIZE} DCT coefficients for UV')
 
 
@@ -102,8 +112,11 @@ for y in range(0, y_channel.shape[0] // BLOCK_SIZE):
         u_channel[y * BLOCK_SIZE : (y+1) * BLOCK_SIZE, x * BLOCK_SIZE : (x+1) * BLOCK_SIZE] = idct2(apply_mask_uv(blocks[:, :, y, x, 1]) * (MAX_U * BLOCK_SIZE) / MAX_QUANT_UV)
         v_channel[y * BLOCK_SIZE : (y+1) * BLOCK_SIZE, x * BLOCK_SIZE : (x+1) * BLOCK_SIZE] = idct2(apply_mask_uv(blocks[:, :, y, x, 2]) * (MAX_V * BLOCK_SIZE) / MAX_QUANT_UV)
 
-compression_factor = 8 ** 3 / QUANTIZATION_BITS_Y / QUANTIZATION_BITS_UV / QUANTIZATION_BITS_UV * ((BLOCK_SIZE ** 2) ** 3) / (np.count_nonzero(mask_y) * np.count_nonzero(mask_uv) * np.count_nonzero(mask_uv))
-compression_factor_y_only = 8 ** 3 / QUANTIZATION_BITS_Y * ((BLOCK_SIZE ** 2) ** 3) / (np.count_nonzero(mask_y))
+block_size_orig = (8 * (BLOCK_SIZE ** 2)) * 3
+block_size_y = (QUANTIZATION_BITS_Y * np.count_nonzero(mask_y))
+block_size_uv = 2 * (QUANTIZATION_BITS_UV * np.count_nonzero(mask_uv))
+compression_factor = block_size_orig / (block_size_y + block_size_uv)
+compression_factor_y_only = block_size_orig / block_size_y
 
 plt.figure(figsize=(30, 10))
 
