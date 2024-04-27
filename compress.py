@@ -4,6 +4,12 @@ import matplotlib.pyplot as plt
 from scipy.fftpack import dct, idct
 import math
 
+BLOCK_SIZE = 8
+QUALITY_FACTOR_Y = 3
+QUALITY_FACTOR_UV = 2
+QUANTIZATION_BITS_Y = 5
+QUANTIZATION_BITS_UV = 4  # needs to be at least 4 or wrong colors appear
+
 def dct2(f):
     """2D Discrete Cosine Transform
     Args:
@@ -22,46 +28,29 @@ def idct2(f):
     """
     return idct(idct(f, axis=0 , norm='ortho'), axis=1 , norm='ortho')
 
-BLOCK_SIZE = 8
-QUALITY_FACTOR_Y = 3
-QUALITY_FACTOR_UV = 2
-QUANTIZATION_BITS_Y = 5
-QUANTIZATION_BITS_UV = 4  # needs to be at least 4 or wrong colors appear
+def gen_mask(QUALITY_FACTOR):
+    mask = np.zeros((BLOCK_SIZE, BLOCK_SIZE))
+    mask[0,0] = 1
+    if QUALITY_FACTOR >= 2:
+        mask[1,0] = 1
+        mask[0,1] = 1
+    if QUALITY_FACTOR >= 3:
+        mask[1,1] = 1
+        mask[0,2] = 1
+        mask[2,0] = 1
+    if QUALITY_FACTOR >= 4:
+        mask[3,0] = 1
+        mask[2,1] = 1
+        mask[1,2] = 1
+        mask[0,3] = 1
+    if QUALITY_FACTOR >= 5:
+        mask = np.ones((BLOCK_SIZE, BLOCK_SIZE))
+    return mask
 
-mask_y = np.zeros((BLOCK_SIZE, BLOCK_SIZE))
-mask_y[0,0] = 1
-if QUALITY_FACTOR_Y >= 2:
-    mask_y[1,0] = 1
-    mask_y[0,1] = 1
-if QUALITY_FACTOR_Y >= 3:
-    mask_y[1,1] = 1
-    mask_y[0,2] = 1
-    mask_y[2,0] = 1
-if QUALITY_FACTOR_Y >= 4:
-    mask_y[3,0] = 1
-    mask_y[2,1] = 1
-    mask_y[1,2] = 1
-    mask_y[0,3] = 1
-if QUALITY_FACTOR_Y >= 5:
-    mask_y = np.ones((BLOCK_SIZE, BLOCK_SIZE))
+mask_y = gen_mask(QUALITY_FACTOR_Y)
 print(f'using {np.count_nonzero(mask_y)}/{BLOCK_SIZE * BLOCK_SIZE} DCT coefficients for Y')
 
-mask_uv = np.zeros((BLOCK_SIZE, BLOCK_SIZE))
-mask_uv[0,0] = 1
-if QUALITY_FACTOR_UV >= 2:
-    mask_uv[1,0] = 1
-    mask_uv[0,1] = 1
-if QUALITY_FACTOR_UV >= 3:
-    mask_uv[1,1] = 1
-    mask_uv[0,2] = 1
-    mask_uv[2,0] = 1
-if QUALITY_FACTOR_UV >= 4:
-    mask_uv[3,0] = 1
-    mask_uv[2,1] = 1
-    mask_uv[1,2] = 1
-    mask_uv[0,3] = 1
-if QUALITY_FACTOR_UV >= 5:
-    mask_uv = np.ones((BLOCK_SIZE, BLOCK_SIZE))
+mask_uv = gen_mask(QUALITY_FACTOR_UV)
 print(f'using {np.count_nonzero(mask_uv)}/{BLOCK_SIZE * BLOCK_SIZE} DCT coefficients for UV')
 
 
