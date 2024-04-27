@@ -117,10 +117,10 @@ for y in range(0, y_channel.shape[0] // BLOCK_SIZE):
 block_size_orig = (8 * (BLOCK_SIZE ** 2)) * 3
 block_size_y = (QUANTIZATION_BITS_Y * np.count_nonzero(mask_y))
 block_size_uv = 2 * (QUANTIZATION_BITS_UV * np.count_nonzero(mask_uv))
-compression_factor = block_size_orig / (block_size_y + block_size_uv)
-compression_factor_y_only = block_size_orig / block_size_y
+compression_ratio = block_size_orig / (block_size_y + block_size_uv)
+compression_ratio_y_only = block_size_orig / block_size_y
 
-print(f'compression factor is {compression_factor:.1f}')
+print(f'compression ratio is {compression_ratio:.1f}')
 print(f'required data rate for 100 Hz is {(block_size_y + block_size_uv) * NUM_BLOCKS_X * NUM_BLOCKS_Y * 100 / 1e6} MBIT')
 
 plt.figure(figsize=(30, 10))
@@ -139,7 +139,7 @@ yuv_data[:, :, 2] = v_channel
 processed_image = Image.fromarray(yuv_data, "YCbCr").convert("RGB")
 plt.subplot(1, 3, 2)
 plt.imshow(processed_image)
-plt.title(f'DCT Compressed Image [compression factor = {compression_factor:.1f}]')
+plt.title(f'DCT Compressed Image [compression ratio = {compression_ratio:.1f}]')
 plt.axis('off')
 plt.axis('tight')
 
@@ -150,7 +150,7 @@ yuv_data[:, :, 2] = 100
 processed_image = Image.fromarray(yuv_data, "YCbCr").convert("RGB")
 plt.subplot(1, 3, 3)
 plt.imshow(processed_image)
-plt.title(f'DCT Compressed Image [compression factor = {compression_factor_y_only:.1f}]')
+plt.title(f'DCT Compressed Image [compression ratio = {compression_ratio_y_only:.1f}]')
 plt.axis('off')
 plt.axis('tight')
 
