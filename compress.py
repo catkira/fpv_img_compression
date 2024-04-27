@@ -7,8 +7,8 @@ import math
 BLOCK_SIZE = 8
 QUALITY_FACTOR_Y = 3
 QUALITY_FACTOR_UV = 2
-QUANTIZATION_BITS_Y = 5
-QUANTIZATION_BITS_UV = 4  # needs to be at least 4 or wrong colors appear
+QUANTIZATION_BITS_Y = 6
+QUANTIZATION_BITS_UV = 5  # needs to be at least 5 or wrong colors appear
 
 def dct2(f):
     """2D Discrete Cosine Transform
@@ -53,7 +53,6 @@ print(f'using {np.count_nonzero(mask_y)}/{BLOCK_SIZE * BLOCK_SIZE} DCT coefficie
 mask_uv = gen_mask(QUALITY_FACTOR_UV)
 print(f'using {np.count_nonzero(mask_uv)}/{BLOCK_SIZE * BLOCK_SIZE} DCT coefficients for UV')
 
-
 # Function to apply mask on DCT coefficients
 def apply_mask_y(dct_matrix):
     return dct_matrix * mask_y
@@ -86,8 +85,8 @@ print(f'MAX_Y = {MAX_Y}, MAX_U = {MAX_U}, MAX_V = {MAX_V}')
 blocks = np.zeros((BLOCK_SIZE, BLOCK_SIZE, y_channel.shape[0] // BLOCK_SIZE, y_channel.shape[1] // BLOCK_SIZE, 3), int)
 
 # Perform DCT on each 8x8 block of the Y, U, and V channels
-MAX_QUANT_Y = 2 ** QUANTIZATION_BITS_Y - 1
-MAX_QUANT_UV = 2 ** QUANTIZATION_BITS_UV - 1
+MAX_QUANT_Y = 2 ** (QUANTIZATION_BITS_Y - 1) - 1    # 2s complement
+MAX_QUANT_UV = 2 ** (QUANTIZATION_BITS_UV - 1) - 1  # 2s complement
 NUM_BLOCKS_X = y_channel.shape[0] // BLOCK_SIZE
 NUM_BLOCKS_Y = y_channel.shape[1] // BLOCK_SIZE
 for y in range(0, y_channel.shape[0], BLOCK_SIZE):
