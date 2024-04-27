@@ -26,7 +26,7 @@ BLOCK_SIZE = 8
 QUALITY_FACTOR_Y = 3
 QUALITY_FACTOR_UV = 2
 QUANTIZATION_BITS_Y = 5
-QUANTIZATION_BITS_UV = 4
+QUANTIZATION_BITS_UV = 4  # needs to be at least 4 or wrong colors appear
 
 mask_y = np.zeros((BLOCK_SIZE, BLOCK_SIZE))
 mask_y[0,0] = 1
@@ -99,6 +99,8 @@ blocks = np.zeros((BLOCK_SIZE, BLOCK_SIZE, y_channel.shape[0] // BLOCK_SIZE, y_c
 # Perform DCT on each 8x8 block of the Y, U, and V channels
 MAX_QUANT_Y = 2 ** QUANTIZATION_BITS_Y - 1
 MAX_QUANT_UV = 2 ** QUANTIZATION_BITS_UV - 1
+NUM_BLOCKS_X = y_channel.shape[0] // BLOCK_SIZE
+NUM_BLOCKS_Y = y_channel.shape[1] // BLOCK_SIZE
 for y in range(0, y_channel.shape[0], BLOCK_SIZE):
     for x in range(0, y_channel.shape[1], BLOCK_SIZE):
         blocks[:, :, y // BLOCK_SIZE, x // BLOCK_SIZE, 0] = np.round(dct2(y_channel[y:y+BLOCK_SIZE, x:x+BLOCK_SIZE]) / (MAX_Y * BLOCK_SIZE) * MAX_QUANT_Y)
@@ -117,6 +119,8 @@ block_size_y = (QUANTIZATION_BITS_Y * np.count_nonzero(mask_y))
 block_size_uv = 2 * (QUANTIZATION_BITS_UV * np.count_nonzero(mask_uv))
 compression_factor = block_size_orig / (block_size_y + block_size_uv)
 compression_factor_y_only = block_size_orig / block_size_y
+
+print(f'required data rate for 100 Hz is {(block_size_y + block_size_uv) * NUM_BLOCKS_X * NUM_BLOCKS_Y * 100 / 1e6} MBIT')
 
 plt.figure(figsize=(30, 10))
 
